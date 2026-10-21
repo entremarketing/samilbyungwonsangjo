@@ -250,22 +250,22 @@ a:focus-visible,.btn:focus-visible{outline:3px solid var(--ac2);outline-offset:2
   var KEY="smc6sssyn3";
   var ADDR="대구광역시 달서구 월배로 440";
   var el=document.getElementById('map');
-  function fail(){el.innerHTML='<p class="mapmsg">지도를 불러오지 못했습니다. 아래 버튼으로 네이버지도에서 확인해 주세요.</p>';}
+  function fail(why){try{console.warn('[map]',why||'failed');}catch(x){}el.innerHTML='<p class="mapmsg">지도를 불러오지 못했습니다. 아래 버튼으로 네이버지도에서 확인해 주세요.</p>';}
   if(!KEY||KEY.indexOf('입력')>-1){fail();return;}
-  window.navermap_authFailure=fail;
+  window.navermap_authFailure=function(){fail('auth failure: Client ID or Web service URL');};
   var s=document.createElement('script');
   s.src='https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId='+encodeURIComponent(KEY)+'&submodules=geocoder';
-  s.onerror=fail;
+  s.onerror=function(){fail('script load error');};
   s.onload=function(){
     try{
       naver.maps.Service.geocode({query:ADDR},function(status,res){
-        if(status!==naver.maps.Service.Status.OK||!res.v2.addresses.length){fail();return;}
+        if(status!==naver.maps.Service.Status.OK||!res.v2.addresses.length){fail('geocode failed: '+status);return;}
         var a=res.v2.addresses[0],p=new naver.maps.LatLng(a.y,a.x);
         el.innerHTML='';
         var map=new naver.maps.Map(el,{center:p,zoom:16,zoomControl:true,zoomControlOptions:{position:naver.maps.Position.TOP_RIGHT}});
         new naver.maps.Marker({position:p,map:map});
       });
-    }catch(e){fail();}
+    }catch(e){fail('exception: '+e);}
   };
   document.head.appendChild(s);
 })();
